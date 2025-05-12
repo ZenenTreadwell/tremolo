@@ -614,14 +614,9 @@ class Tremolo:
 
                 for routes in self.routes.values():
                     for route in routes:
-                        pattern, func, kw = route
+                        pattern, func, name, kw = route
 
-                        print(
-                            '  %s -> %s(%s)' %
-                            (pattern,
-                             func.__name__,
-                             ', '.join('%s=%s' % item for item in kw.items()))
-                        )
+                        print(f'  {name:10} -> {func.__name__}({", ".join(f"{k}={v}" for k,v in kw.items())})')
 
                 print()
 

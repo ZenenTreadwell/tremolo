@@ -1,5 +1,7 @@
 # Copyright (c) 2023 nggit
 
+from asyncio import iscoroutine
+
 from .lib.http_protocol import HTTPProtocol
 from .lib.http_response import KEEPALIVE_OR_CLOSE, UPGRADE_OR_KEEPALIVE
 from .lib.sse import SSE
@@ -130,7 +132,10 @@ class HTTPServer(HTTPProtocol):
         if next_data:
             data = await next_data()
         else:
-            data = await agen
+            if not iscoroutine(agen):
+                data = agen
+            else:
+                data = await agen
 
             if data is None:
                 response.close()
@@ -266,7 +271,7 @@ class HTTPServer(HTTPProtocol):
             key = bytes([len(parts)]) + parts[0]
 
         if key in self.app.routes:
-            for pattern, func, kwargs in self.app.routes[key]:
+            for pattern, func, name, kwargs in self.app.routes[key]:
                 m = pattern.search(request.url)
 
                 if m:
@@ -284,14 +289,14 @@ class HTTPServer(HTTPProtocol):
 
             while i > 0:
                 i -= 1
-                pattern, func, kwargs = self.app.routes[-1][i]
+                pattern, func, name, kwargs = self.app.routes[-1][i]
                 m = pattern.search(request.url)
 
                 if m:
                     if key in self.app.routes:
-                        self.app.routes[key].append((pattern, func, kwargs))
+                        self.app.routes[key].append((pattern, func, name, kwargs))
                     else:
-                        self.app.routes[key] = [(pattern, func, kwargs)]
+                        self.app.routes[key] = [(pattern, func, name, kwargs)]
 
                     matches = m.groupdict()
 
